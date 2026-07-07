@@ -1,8 +1,10 @@
 import warnings
-max_decimal_precision = 20
+
+max_decimal_precision = 28
+
 
 class PreciseNumber:
-    def __init__(self, value: int | float | str, nexp: int = 0):
+    def __init__(self, value: int | float, nexp: int = 0):
         self.value = None
         self.nexp = None
         self.precise = True
@@ -54,7 +56,7 @@ class PreciseNumber:
                 self.nexp = 0
 
     def exp(self):
-        #e^x using Taylor series: e^x = 1 + x + x^2/2! + x^3/3! + ..
+        # e^x using Taylor series: e^x = 1 + x + x^2/2! + x^3/3! + ..
         result = PreciseNumber(1)
         term = PreciseNumber(1)
         for i in range(1, max_decimal_precision + 50):
@@ -102,7 +104,7 @@ class PreciseNumber:
         is_integer = exponent.nexp == 0
 
         if is_integer:
-            # Integer exponentiation (exact)
+            # int exp (exact)
             exp_int = exponent.value
             if exp_int < 0:
                 return PreciseNumber(1) / (self ** PreciseNumber(-exp_int))
@@ -122,7 +124,7 @@ class PreciseNumber:
 
             return result
         else:
-            # Fractional: n^x = e^(x * ln(n))
+            # fractional ( n^x = e^(x * ln(n)) )
             if self.value <= 0:
                 raise ValueError("fractional exponents only defined for positive numbers")
 
@@ -131,7 +133,7 @@ class PreciseNumber:
             return result
 
     def __abs__(self):
-        return self if self.value>0 else -self
+        return self if self.value > 0 else -self
 
     def __round__(self, ndigits: int):
         if self.nexp <= ndigits:
@@ -152,30 +154,37 @@ class PreciseNumber:
         result.precise = result.precise and self.precise
         return result
 
-    def __eq__(self, other: 'PreciseNumber'):
-        return self.value == other.value and self.nexp == other.nexp
+    def _cmp(self, other):
+        a, b = self.value, other.value
+        sa = (a > 0) - (a < 0)
+        sb = (b > 0) - (b < 0)
+        if sa != sb:
+            return (sa > sb) - (sa < sb)
 
+        if self.nexp > other.nexp:
+            b *= 10 ** (self.nexp - other.nexp)
+        elif self.nexp < other.nexp:
+            a *= 10 ** (other.nexp - self.nexp)
 
-    def __lt__(self, other: 'PreciseNumber'):
-        if self.nexp == other.nexp:
-            return self.value < other.value
-        elif self.nexp > other.nexp:
-            o = int(str(other.value) + '0' * (self.nexp - other.nexp))
-            return self.value < o
-        else:
-            v = int(str(self.value) + '0' * (other.nexp - self.nexp))
-            return v < other.value
+        return (a > b) - (a < b)
 
+    def __lt__(self, other):
+        return self._cmp(other) < 0
 
-    def __gt__(self, other: 'PreciseNumber'):
-        if self.nexp == other.nexp:
-            return self.value > other.value
-        elif self.nexp > other.nexp:
-            o = int(str(other.value) + '0' * (self.nexp - other.nexp))
-            return self.value > o
-        else:
-            v = int(str(self.value) + '0' * (other.nexp - self.nexp))
-            return v > other.value
+    def __le__(self, other):
+        return self._cmp(other) <= 0
+
+    def __gt__(self, other):
+        return self._cmp(other) > 0
+
+    def __ge__(self, other):
+        return self._cmp(other) >= 0
+
+    def __eq__(self, other):
+        return self._cmp(other) == 0
+
+    def __hash__(self):
+        return hash(str(self))
 
     def __add__(self, other):
         if self.nexp == other.nexp:
