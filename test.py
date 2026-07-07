@@ -7,6 +7,8 @@ e = PreciseNumber(-0.1)
 f = PreciseNumber(-0.13)
 g = PreciseNumber(2)
 h = PreciseNumber(0.5)
+i = PreciseNumber('11')
+j = PreciseNumber('0.3')
 
 objs = [p, b, c, d, e, f, g, h]
 for obj in objs:
@@ -20,3 +22,12 @@ for obj in objs:
         print('sub:', obj - obj2)
         print('mul:', obj * obj2)
         print('div:', obj / obj2)
+        try:
+            print('ln:',  obj.ln())
+        except ValueError:
+            print('ln: impossible')
+        print('exp:', obj.exp())
+        try:
+            print('pow:', obj ** obj2)
+        except ValueError:
+            print('pow: impossible')

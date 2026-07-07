@@ -1,24 +1,35 @@
+import warnings
 max_decimal_precision = 20
 
 class PreciseNumber:
-    def __init__(self, value: int | float, nexp: int = 0):
+    def __init__(self, value: int | float | str, nexp: int = 0):
         self.value = None
         self.nexp = None
         self.precise = True
         self.set(value, nexp)
 
-    def set(self, value: int | float, nexp: int = 0):
+    def set(self, value: int | float | str, nexp: int = 0):
         if value == 0:
             self.value = 0
             self.nexp = 0
             return
-        if type(value) == int:
+        if isinstance(value, int):
             v = str(abs(value))
             trim = min(nexp, len(v) - len(v.rstrip('0')))
             self.value = value // 10 ** trim if trim else value
             self.nexp = nexp - trim
         else:
+            if isinstance(value, float):
+                warnings.warn(
+                    "Constructing PreciseNumber from a float may inherit floating-point imprecision.\n"
+                    "Consider using a string (e.g. '0.1') or an int instead.\n"
+                    f"Given float: {value!r}",
+                    UserWarning,
+                    stacklevel=2,
+                )
             v = str(value)
+            if "." not in v:
+                v += ".0"
             v = v.split('.')
             self.nexp = len(v[1]) + nexp
             self.nexp -= len(v[1]) - len(v[1].rstrip('0'))
@@ -41,6 +52,86 @@ class PreciseNumber:
                     self.nexp -= trim
             else:
                 self.nexp = 0
+
+    def exp(self):
+        #e^x using Taylor series: e^x = 1 + x + x^2/2! + x^3/3! + ..
+        result = PreciseNumber(1)
+        term = PreciseNumber(1)
+        for i in range(1, max_decimal_precision + 50):
+            term = term * self / PreciseNumber(i)
+            result = result + term
+            # Stop when term is negligibly small
+            if term.nexp > 0 and abs(term.value) < 1:
+                break
+        return result
+
+    def ln(self):
+        if self.value <= 0:
+            raise ValueError("ln only defined for positive numbers")
+
+        # Use series: ln(x) = 2 * sum_{n=0}^∞ (1/(2n+1)) * ((x-1)/(x+1))^(2n+1)
+        x_minus_1 = self - PreciseNumber(1)
+        x_plus_1 = self + PreciseNumber(1)
+
+        y = x_minus_1 / x_plus_1  # (x-1)/(x+1)
+
+        result = PreciseNumber(0)
+        term = y
+        for n in range(max_decimal_precision + 50):
+            result = result + term / PreciseNumber(2 * n + 1)
+            term = term * y * y  # y^(2n+3)
+            if term.nexp > 0 and abs(term.value) < 1:
+                break
+
+        return PreciseNumber(2) * result
+
+    def __pow__(self, exponent):
+        # exponent is already a PreciseNumber
+
+        # Check if exponent is 0
+        if exponent.value == 0 and exponent.nexp == 0:
+            return PreciseNumber(1)
+
+        # Check if exponent is 1
+        if exponent.value == 1 and exponent.nexp == 0:
+            result = PreciseNumber(self.value, self.nexp)
+            result.precise = self.precise
+            return result
+
+        # Check if integer exponent (no decimal places)
+        is_integer = exponent.nexp == 0
+
+        if is_integer:
+            # Integer exponentiation (exact)
+            exp_int = exponent.value
+            if exp_int < 0:
+                return PreciseNumber(1) / (self ** PreciseNumber(-exp_int))
+
+            new_value = self.value ** exp_int
+            new_nexp = self.nexp * exp_int
+            result = PreciseNumber.__new__(PreciseNumber)
+            result.value = new_value
+            result.nexp = new_nexp
+            result.precise = self.precise
+
+            if new_nexp > max_decimal_precision:
+                excess = new_nexp - max_decimal_precision
+                result.value //= 10 ** excess
+                result.nexp = max_decimal_precision
+                result.precise = False
+
+            return result
+        else:
+            # Fractional: n^x = e^(x * ln(n))
+            if self.value <= 0:
+                raise ValueError("fractional exponents only defined for positive numbers")
+
+            result = (exponent * self.ln()).exp()
+            result.precise = False
+            return result
+
+    def __abs__(self):
+        return self if self.value>0 else -self
 
     def __round__(self, ndigits: int):
         if self.nexp <= ndigits:
