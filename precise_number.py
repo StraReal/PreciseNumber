@@ -144,7 +144,7 @@ class PreciseNumber:
     def __abs__(self):
         return self if self.value > 0 else -self
 
-    def __round__(self, ndigits: int):
+    def __round__(self, ndigits: int = 0):
         if self.nexp <= ndigits:
             result = PreciseNumber(self.value, self.nexp)
             result.precise = result.precise and self.precise
