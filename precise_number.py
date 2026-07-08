@@ -55,6 +55,15 @@ class PreciseNumber:
             else:
                 self.nexp = 0
 
+    @staticmethod
+    def _coerce(value):
+        if isinstance(value, PreciseNumber):
+            return value
+        result = PreciseNumber.__new__(PreciseNumber)
+        result.precise = True
+        result.set(value)
+        return result
+
     def exp(self):
         # e^x using Taylor series: e^x = 1 + x + x^2/2! + x^3/3! + ..
         result = PreciseNumber(1)
@@ -88,7 +97,7 @@ class PreciseNumber:
         return PreciseNumber(2) * result
 
     def __pow__(self, exponent):
-        # exponent is already a PreciseNumber
+        exponent = self._coerce(exponent)
 
         # Check if exponent is 0
         if exponent.value == 0 and exponent.nexp == 0:
@@ -155,6 +164,7 @@ class PreciseNumber:
         return result
 
     def _cmp(self, other):
+        other = self._coerce(other)
         a, b = self.value, other.value
         sa = (a > 0) - (a < 0)
         sb = (b > 0) - (b < 0)
@@ -187,6 +197,7 @@ class PreciseNumber:
         return hash(str(self))
 
     def __add__(self, other):
+        other = self._coerce(other)
         if self.nexp == other.nexp:
             result = PreciseNumber(self.value + other.value, self.nexp)
         elif self.nexp > other.nexp:
@@ -204,14 +215,17 @@ class PreciseNumber:
         return result
 
     def __mul__(self, other):
+        other = self._coerce(other)
         result = PreciseNumber(self.value * other.value, self.nexp + other.nexp)
         result.precise = result.precise and self.precise and other.precise
         return result
 
     def __sub__(self, other):
+        other = self._coerce(other)
         return self + (-other)
 
     def __truediv__(self, other):
+        other = self._coerce(other)
         if other.value == 0:
             raise ZeroDivisionError("division by zero")
 
