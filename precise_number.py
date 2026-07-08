@@ -4,7 +4,7 @@ max_decimal_precision = 28
 
 
 class PreciseNumber:
-    def __init__(self, value: int | float, nexp: int = 0):
+    def __init__(self, value: int | float | str, nexp: int = 0):
         self.value = None
         self.nexp = None
         self.precise = True
