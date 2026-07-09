@@ -178,6 +178,19 @@ class PreciseNumber:
 
         return (a > b) - (a < b)
 
+    def __floor__(self):
+        if self.nexp <= 0:
+            return self.value * (10 ** (-self.nexp))
+        else:
+            return self.value // (10 ** self.nexp)
+
+    def __ceil__(self):
+        if self.nexp <= 0:
+            return self.value * (10 ** (-self.nexp))
+        else:
+            divisor = 10 ** self.nexp
+            return -(-self.value // divisor)
+
     def __lt__(self, other):
         return self._cmp(other) < 0
 
@@ -239,6 +252,23 @@ class PreciseNumber:
         result = PreciseNumber(sign * quotient, result_nexp)
         result.precise = result.precise and self.precise and other.precise and exact
         return result
+
+    def __floordiv__(self, other):
+        other = self._coerce(other)
+        if other.value == 0:
+            raise ZeroDivisionError("division by zero")
+
+        sign = -1 if (self.value < 0) != (other.value < 0) else 1
+        a, b = abs(self.value), abs(other.value)
+
+        # Adjust for different scales: (a / 10^nexp_a) // (b / 10^nexp_b)
+        # = (a * 10^nexp_b) // (b * 10^nexp_a)
+        quotient = (a * 10 ** other.nexp) // (b * 10 ** self.nexp)
+
+        result = PreciseNumber(sign * quotient, 0)
+        result.precise = result.precise and self.precise and other.precise
+        return result
+
 
     def __str__(self):
         if self.nexp:

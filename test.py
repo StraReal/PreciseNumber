@@ -1,14 +1,16 @@
-from precise_number import PreciseNumber
-p = PreciseNumber(-0.153)
-b = PreciseNumber(0.23)
-c = PreciseNumber(-0.2)
-d = PreciseNumber(0.1)
-e = PreciseNumber(-0.1)
-f = PreciseNumber(-0.13)
-g = PreciseNumber(2)
-h = PreciseNumber(0.5)
-i = PreciseNumber('11')
-j = PreciseNumber('0.3')
+import math
+
+from precise_number import PreciseNumber as pn
+p = pn(-0.153)
+b = pn(0.23)
+c = pn(-0.2)
+d = pn(0.1)
+e = pn(-0.1)
+f = pn(-0.13)
+g = pn(2)
+h = pn(0.5)
+i = pn('11')
+j = pn('0.3')
 
 objs = [p, b, c, d, e, f, g, h]
 for obj in objs:
@@ -22,6 +24,8 @@ for obj in objs:
         print('sub:', obj - obj2)
         print('mul:', obj * obj2)
         print('div:', obj / obj2)
+        print('floor:',math.floor(obj))
+        print('ceil:', math.ceil(obj))
         try:
             print('ln:',  obj.ln())
         except ValueError:
@@ -31,3 +35,9 @@ for obj in objs:
             print('pow:', obj ** obj2)
         except ValueError:
             print('pow: impossible')
+
+print("===")
+print(pn(3) // pn(2))
+print(math.floor(pn(3.4)))
+print(math.ceil(pn(3.4)))
+
