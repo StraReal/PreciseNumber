@@ -37,11 +37,4 @@ for obj in objs:
         except ValueError:
             print('pow: impossible')
 
-print("===")
-print(pn(3) // pn(2))
-print(pn(0.1)+pn(0.2))
-print(math.floor(pn(3.4)))
-print(math.ceil(pn(3.4)))
-
-print(math.pi, pn.PI)
-print(pn(math.pi)-pn.PI)
+print(pn.PI + 1)
