@@ -300,3 +300,4 @@ class PreciseNumber:
 
 # Constants
 PreciseNumber.PI = PreciseNumber("3.14159265358979323846264338327950288419716939937510", precise=False)
+PreciseNumber.E  = PreciseNumber("0.57721566490153286060651209008240243104215933593992", precise=False)
